@@ -11,6 +11,7 @@ export default function Painel() {
     const [abaAtiva, setAbaAtiva] = useState('painel');
     const [teams, setTeams] = useState([]);
     const [players, setPlayers] = useState([]);
+    const [historicoPartidas, setHistoricoPartidas] = useState([]); 
     
     const [teamName, setTeamName] = useState('');
     const [coachName, setCoachName] = useState('');
@@ -44,6 +45,14 @@ export default function Painel() {
             const resPlayers = await fetch(`${API_URL}/players?championshipId=${id}`);
             const playersData = await resPlayers.json();
             setPlayers(playersData);
+
+            const resMatches = await fetch(`${API_URL}/matches?championshipId=${id}`);
+            const matchesData = await resMatches.json();
+            if (Array.isArray(matchesData)) {
+                setHistoricoPartidas(matchesData);
+            } else {
+                setHistoricoPartidas([]);
+            }
         } catch (err) {
             console.error(err);
         }
@@ -139,43 +148,67 @@ export default function Painel() {
             setScore2('');
             setSumula([]);
             alert("Partida salva com sucesso!");
-            carregarDados();
+            carregarDados(); 
         } catch (err) {
             alert("Erro ao registrar a partida.");
         }
     };
 
+    const getNomeTime = (teamId) => {
+        const timeEncontrado = teams.find(t => t.id === teamId);
+        return timeEncontrado ? timeEncontrado.name : `Time ${teamId}`;
+    };
+
     const renderAba = () => {
         if (abaAtiva === 'painel') {
             return (
-                <div className="dashboard-grid">
-                    <div>
-                        <h1>📊 Classificação</h1>
-                        <table>
-                            <thead><tr><th>Pos</th><th>Time</th><th>Pts</th><th>Gols</th></tr></thead>
-                            <tbody>
-                                {teams.map((t, i) => (
-                                    <tr key={t.id} className={i === 0 && t.points > 0 ? 'first-place' : ''}>
-                                        <td>{i + 1}º</td><td>{t.name}</td><td>{t.points}</td><td>{t.goals}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                <div>
+                    <div className="dashboard-grid">
+                        <div>
+                            <h1>📊 Classificação</h1>
+                            <table>
+                                <thead><tr><th>Pos</th><th>Time</th><th>Pts</th><th>Gols</th></tr></thead>
+                                <tbody>
+                                    {teams.map((t, i) => (
+                                        <tr key={t.id} className={i === 0 && t.points > 0 ? 'first-place' : ''}>
+                                            <td>{i + 1}º</td><td>{t.name}</td><td>{t.points}</td><td>{t.goals}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h1>👟 Artilharia</h1>
+                            <table>
+                                <thead><tr><th>Pos</th><th>Jogador</th><th>Gols</th></tr></thead>
+                                <tbody>
+                                    {players.map((p, i) => (
+                                        <tr key={p.id}>
+                                            <td>{i + 1}º</td>
+                                            <td>{p.name} <span style={{ fontSize: '0.8rem', color: '#888' }}>(A: {p.yellowCards} | V: {p.redCards})</span></td>
+                                            <td>{p.goals}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div>
-                        <h1>👟 Artilharia</h1>
-                        <table>
-                            <thead><tr><th>Pos</th><th>Jogador</th><th>Gols</th></tr></thead>
-                            <tbody>
-                                {players.map((p, i) => (
-                                    <tr key={p.id}>
-                                        <td>{i + 1}º</td>
-                                        <td>{p.name} <span style={{ fontSize: '0.8rem', color: '#888' }}>(A: {p.yellowCards} | V: {p.redCards})</span></td>
-                                        <td>{p.goals}</td>
-                                    </tr>
+
+                    {/* HISTÓRICO DE PARTIDAS FICA AQUI */}
+                    <div style={{ marginTop: '30px', padding: '20px', background: '#f8f9fa', border: '1px solid #ddd', borderRadius: '8px' }}>
+                        <h3>📜 Histórico de Partidas</h3>
+                        
+                        {historicoPartidas.length === 0 ? (
+                            <p>Nenhuma partida realizada ainda.</p>
+                        ) : (
+                            <ul style={{ listStyle: 'none', padding: 0 }}>
+                                {historicoPartidas.map(partida => (
+                                    <li key={partida.id} style={{ padding: '15px', borderBottom: '1px solid #ccc', fontSize: '18px' }}>
+                                        <strong>{getNomeTime(partida.team1Id)}</strong> {partida.score1} x {partida.score2} <strong>{getNomeTime(partida.team2Id)}</strong>
+                                    </li>
                                 ))}
-                            </tbody>
-                        </table>
+                            </ul>
+                        )}
                     </div>
                 </div>
             );
