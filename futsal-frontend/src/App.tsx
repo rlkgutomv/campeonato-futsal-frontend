@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Lobby from './pages/Lobby'
 import Painel from './pages/Painel'
 
-function App() {
+export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Lobby />} />
@@ -10,5 +10,3 @@ function App() {
     </Routes>
   )
 }
-
-export default App
